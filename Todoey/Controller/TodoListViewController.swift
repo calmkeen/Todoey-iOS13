@@ -17,7 +17,7 @@ class TodoListViewController: UITableViewController {
     
     var selectedCategory : Category? {
         didSet{
-            loadItems()
+            loadItem()
         }
     }
     
@@ -62,8 +62,21 @@ class TodoListViewController: UITableViewController {
         return cell
     }
 
-    
+    // 업데이트에 사용하는게 좋다. didSelectRowAt
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write{
+                    realm.delete(item)
+                    item.done = !item.done
+                }
+            } catch {
+                print("Error saving done status \(error)")
+            }
+        }
+            self.tableView.reloadData()
+            
         //print(arrary[indexPath.row])
         //삭제 기능 순서 중요
 //        context.delete(arrary[indexPath.row])
@@ -103,29 +116,28 @@ class TodoListViewController: UITableViewController {
         
         let action = UIAlertAction(title: "add item", style: .default) { action in
             
-        
-            
-//            let newitems = Item(context: self.context)
-//            newitems.title = textfield.text!
-//            newitems.done = false
-//            newitems.parentCategory = self.selectedCategory
-//            self.arrary.append(newitems)
-            
-            self.saveItem()
-            
-            //self.defaults.set(self.arrary, forKey: "TodoListArray")
-            
-            
+            if let currrentCategory = self.selectedCategory {
+                do{
+                    try self.realm.write{
+                        let newitems = Item()
+                        newitems.title = textField.text!
+                        newitems.dateCreated = Date()
+                        currrentCategory.items.append(newitems)
+                    }
+                    } catch {
+                        print("CurrentCategory error \(error)")
+                    }
+                }
+            //테이블 뷰를 불러서 재업데이트
+            self.tableView.reloadData()
         }
+            //self.defaults.set(self.arrary, forKey: "TodoListArray")
         
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Create new item"
             textField = alertTextField
-            
         }
-        
         alert.addAction(action)
-        
         present(alert, animated: true, completion: nil)
         
     }
@@ -144,11 +156,19 @@ class TodoListViewController: UITableViewController {
         }
     
 
-}
+    }
+
 //MARK: - Search bar Methods
-//extension TodoListViewController: UISearchBarDelegate {
-//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//
+extension TodoListViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+
+        
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dataCreated", ascending: true)
+        
+        tableView.reloadData()
+        
+        
+        
 //        let request:  NSFetchRequest<Item> = Item.fetchRequest()
 //
 //        let predicate = NSPredicate(format: "title Contains %@", searchBar.text!)
@@ -156,16 +176,15 @@ class TodoListViewController: UITableViewController {
 //        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
 //
 //        loaditem(with: request, predicate: predicate)
-//    }
-//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-//        if searchBar.text?.count == 0{
-//            loaditem()
-//
-//            DispatchQueue.main.async {
-//                searchBar.resignFirstResponder()
-//            }
-//
-//
-//        }
-//    }
-//}
+    }
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0{
+            loadItem()
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+
+
+        }
+    }
+}
