@@ -8,9 +8,11 @@
 
 import UIKit
 import RealmSwift
+import SwipeCellKit
+import ChameleonFramework
 
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
@@ -25,19 +27,22 @@ class TodoListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+
         
-      //  loaditem()
+        tableView.separatorStyle = .none
+        //  loaditem()
         
         
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
-            //MARK: - tableview datasource method
+        //MARK: - tableview datasource method
         
-//        if let items = defaults.array( forKey: "TodoListArray") as? [Item]{
-//            arrary = items
-//        }
+        //        if let items = defaults.array( forKey: "TodoListArray") as? [Item]{
+        //            arrary = items
+        //        }
         // Do any additional setup after loading the vie
     }
+    
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return todoItems?.count ?? 1
@@ -46,22 +51,33 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
-        
-        cell.textLabel?.text = item.title
-        
-        cell.accessoryType = item.done ? .checkmark : .none
-        //Ternary operator ==>
-        // value = condition ? valueIfTrue : valueIfFalse
+            
+            cell.textLabel?.text = item.title
+            
+            if let colour = UIColor(hexString: selectedCategory!.colour)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)){
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }
+                                                
+            
+            
+            
+            cell.accessoryType = item.done ? .checkmark : .none
+            //Ternary operator ==>
+            // value = condition ? valueIfTrue : valueIfFalse
         } else {
             cell.textLabel?.text  = "no items added"
         }
-        
         return cell
     }
-
+    
+    
+    //      return cell
+    
+    
     // 업데이트에 사용하는게 좋다. didSelectRowAt
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
@@ -75,36 +91,37 @@ class TodoListViewController: UITableViewController {
                 print("Error saving done status \(error)")
             }
         }
-            self.tableView.reloadData()
-            
-        //print(arrary[indexPath.row])
-        //삭제 기능 순서 중요
-//        context.delete(arrary[indexPath.row])
-//        arrary.remove(at: indexPath.row)
-        //일단 주석
-//        todoItems[indexPath.row].done = !todoItems[indexPath.row].done
-//        saveItem()
+        tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
     }
-        
-
-        //MARK: - tableView Delegate Method
-      
-//        if arrary[indexPath.row].done == false{
-//            arrary[indexPath.row].done = true
-//        }else{
-//            arrary[indexPath.row].done = false
-//        }
-        
-//        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark{
-//            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-//        }else {
-//            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-//        }
-//      arrary[indexPath.row].setValue("completed", forKey: "title")아래코드와 같은 기능
-        //
+    //print(arrary[indexPath.row])
+    //삭제 기능 순서 중요
+    //        context.delete(arrary[indexPath.row])
+    //        arrary.remove(at: indexPath.row)
+    //일단 주석
+    //        todoItems[indexPath.row].done = !todoItems[indexPath.row].done
+    //        saveItem()
+    //        tableView.deselectRow(at: indexPath, animated: true)
+    //    }
+    
+    
+    //MARK: - tableView Delegate Method
+    
+    //            if arrary[indexPath.row].done == false{
+    //                arrary[indexPath.row].done = true
+    //            }else{
+    //                arrary[indexPath.row].done = false
+    //            }
+    //
+    //            if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark{
+    //                tableView.cellForRow(at: indexPath)?.accessoryType = .none
+    //            }else {
+    //                tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
+    //            }
+    //      arrary[indexPath.row].setValue("completed", forKey: "title")아래코드와 같은 기능
+    //
     //saveItem()
-
+    
     
     //MARK: - add new item
     
@@ -124,14 +141,14 @@ class TodoListViewController: UITableViewController {
                         newitems.dateCreated = Date()
                         currrentCategory.items.append(newitems)
                     }
-                    } catch {
-                        print("CurrentCategory error \(error)")
-                    }
+                } catch {
+                    print("CurrentCategory error \(error)")
                 }
+            }
             //테이블 뷰를 불러서 재업데이트
             self.tableView.reloadData()
         }
-            //self.defaults.set(self.arrary, forKey: "TodoListArray")
+        //self.defaults.set(self.arrary, forKey: "TodoListArray")
         
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Create new item"
@@ -145,7 +162,7 @@ class TodoListViewController: UITableViewController {
         
         self.tableView.reloadData()
     }
-  
+    
     
     func loadItem(){
         
@@ -153,29 +170,29 @@ class TodoListViewController: UITableViewController {
         
         tableView.reloadData()
         
-        }
-    
-
     }
-
+    override func updateModel(at indexPath : IndexPath){
+        
+        if let item = todoItems?[indexPath.row] {
+            do {
+                try realm.write{
+                    realm.delete(item)
+                    item.done = !item.done
+                }
+            } catch {
+                print("Error saving done status \(error)")
+            }
+        }
+    }
+}
 //MARK: - Search bar Methods
 extension TodoListViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-
+        
         
         todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dataCreated", ascending: true)
         
         tableView.reloadData()
-        
-        
-        
-//        let request:  NSFetchRequest<Item> = Item.fetchRequest()
-//
-//        let predicate = NSPredicate(format: "title Contains %@", searchBar.text!)
-//
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//
-//        loaditem(with: request, predicate: predicate)
     }
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchBar.text?.count == 0{
@@ -183,8 +200,9 @@ extension TodoListViewController: UISearchBarDelegate {
             DispatchQueue.main.async {
                 searchBar.resignFirstResponder()
             }
-
-
+            
+            
         }
     }
 }
+
