@@ -42,7 +42,7 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
         
         return [deleteAction]
     }
-    //delegatte method for destructive
+    //delegate method for destructive
     func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
         var options = SwipeOptions()
         //style change
