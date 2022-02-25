@@ -46,10 +46,11 @@ class TodoListViewController: SwipeTableViewController {
                 
                 if let navBarColour = UIColor(hexString: colourHex){
                     
-                    navBar.barTintColor = navBarColour
+                    navBar.backgroundColor = navBarColour
                     
-                    navBar.tintColor = ContrastColorOf(navBarColour, returnFlat: true)
-                    
+                    //navBar.tintColor = ContrastColorOf(navBarColour, returnFlat: true)
+                    navBar.barTintColor = ContrastColorOf(navBarColour, returnFlat: true)
+
                     navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : ContrastColorOf(navBarColour, returnFlat: true)]
                     
                     searchBar.barTintColor = navBarColour
@@ -73,35 +74,21 @@ class TodoListViewController: SwipeTableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
-        
         if let item = todoItems?[indexPath.row] {
-            
             cell.textLabel?.text = item.title
-            
+
             if let colour = UIColor(hexString: selectedCategory!.colour)?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems!.count)){
                 cell.backgroundColor = colour
                 cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
             }
-                                                
-            
-            
-            
             cell.accessoryType = item.done ? .checkmark : .none
-            //Ternary operator ==>
-            // value = condition ? valueIfTrue : valueIfFalse
         } else {
             cell.textLabel?.text  = "no items added"
         }
         return cell
     }
-    
-    
-    //      return cell
-    
-    
+
     // 업데이트에 사용하는게 좋다. didSelectRowAt
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
